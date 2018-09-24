@@ -18,11 +18,11 @@ Main Menu:
   
   Total Time: LEFT / RIGHT / T_LEFT / T_RIGHT to increase / decrease total timelapse time
   
-    If Total Time = 0, photos will be taken at max speed.
+  If Total Time = 0, photos will be taken at max speed.
     
-    The minimum total time (if NOT 0) is calculated by the controller.  A shorter amount of time cannot be selected.
+  The minimum total time (if NOT 0) is calculated by the controller.  A shorter amount of time cannot be selected.
     
-    This is done to guarantee that the photos are equichronilogical (same time between photos).
+  This is done to guarantee that the photos are equichronilogical (same time between photos).
     
   Number Shots: LEFT / RIGHT / T_LEFT / T_RIGHT to increase / decrease number of photos in timelapse
   
@@ -30,7 +30,7 @@ Main Menu:
   
   Start IR: RIGHT to set current position as distance to subject and ending theta
   
-    NEXT: LEFT / RIGHT to move camera about subject, T_RIGHT to set as start position and start timelapse
+  NEXT: LEFT / RIGHT to move camera about subject, T_RIGHT to set as start position and start timelapse
     
   Start EnE: RIGHT to move to first target position and begin timelapse, moving straight to second target position
   
@@ -42,17 +42,17 @@ Moving:
 
   Controls:
   
-    T_LEFT: Go back to main menu
+  T_LEFT: Go back to main menu
     
-    T_RIGHT: Toggle primary / secondary rotation
+  T_RIGHT: Toggle primary / secondary rotation
     
-    LEFT / RIGHT: Rotate primary or secondary rotator
+  LEFT / RIGHT: Rotate primary or secondary rotator
     
-    UP / DOWN: Extend or retract boom
+  UP / DOWN: Extend or retract boom
     
   Notes:
   
-    If the subject position is set, an asterisk will appear on the Moving screen when a complete rotation cannot be completed.
+  If the subject position is set, an asterisk will appear on the Moving screen when a complete rotation cannot be completed.
     
     
     
