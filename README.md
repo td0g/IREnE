@@ -20,7 +20,6 @@ Menu can be navigated using UP / DOWN buttons
   
   Total Time: LEFT / RIGHT / T_LEFT / T_RIGHT to increase / decrease total timelapse time
   ```
-
   If Total Time = 0, photos will be taken at max speed.
     
   The minimum total time (if NOT 0) is calculated by the controller.  A shorter amount of time cannot be selected.
