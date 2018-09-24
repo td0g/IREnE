@@ -6,10 +6,12 @@ vtgerritsen@gmail.com
 
 For description see https://gerritsendesign.wordpress.com/2018/09/23/camera-slider-2-0-irene-diy/
 
-UI Manual:
+## UI Manual:
 
 Menu can be navigated using UP / DOWN buttons
-Main Menu:
+
+### Main Menu:
+
   Move: RIGHT to select and manually move camera, T_RIGHT to revert to last target's theta
   
   Set Target: RIGHT to set a target, LEFT to reset all targets
@@ -38,7 +40,7 @@ Main Menu:
  
  
 
-Moving:
+### Moving:
 
   Controls:
   
@@ -56,7 +58,7 @@ Moving:
     
     
     
-Settings:
+### Settings:
 
   A, C: Steps per Rad.  Adjust using LEFT / RIGHT.
   
@@ -74,7 +76,7 @@ Settings:
   
   
   
-UART:
+### UART:
 
   When connected to a PC, the recent history can be printed by entering 'h/'.
   
