@@ -19,13 +19,14 @@ Menu can be navigated using UP / DOWN buttons
   Set C Zero: RIGHT to set current C position as zero (Camera facing straight back at rotator)
   
   Total Time: LEFT / RIGHT / T_LEFT / T_RIGHT to increase / decrease total timelapse time
-  
+  ```
+
   If Total Time = 0, photos will be taken at max speed.
     
   The minimum total time (if NOT 0) is calculated by the controller.  A shorter amount of time cannot be selected.
     
   This is done to guarantee that the photos are equichronilogical (same time between photos).
-    
+  ```
   Number Shots: LEFT / RIGHT / T_LEFT / T_RIGHT to increase / decrease number of photos in timelapse
   
   Shutter Time: LEFT / RIGHT / T_LEFT / T_RIGHT to increase / decrease shutter open time
