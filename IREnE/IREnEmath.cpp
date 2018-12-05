@@ -1,12 +1,11 @@
 #include "IREnEmath.h"
 #include <Arduino.h>
 
-#define DEBUG
+//#define DEBUG
 
-
-IREnEmath::IREnEmath(uint16_t _a, uint16_t _c){
-  A = _a;
-  C = _c;
+IREnEmath::IREnEmath(){
+  A = 1;
+  C = 1;
 }
 
 void IREnEmath::setAC(uint16_t _a, uint16_t _c){
@@ -27,7 +26,6 @@ long IREnEmath::abTOx(int32_t _a, uint32_t _b){
     Serial.print(_b);
     Serial.print(F(" --> "));
     Serial.println(temp);
-    Serial.println(F("  COMPUTED"));
     Serial.println();
   #endif
   return long(temp);
@@ -46,7 +44,6 @@ long IREnEmath::abTOy(int32_t _a, uint32_t _b){
     Serial.print(_b);
     Serial.print(F(" --> "));
     Serial.println(temp);
-    Serial.println(F("  COMPUTED"));
     Serial.println();
   #endif
   return long(temp);
@@ -59,8 +56,12 @@ float IREnEmath::acTOtheta(int32_t _a, int32_t _c){
   temp2 /= C;
   temp2 = PI - temp2;
   temp -= temp2;
-  if (abs(temp - PI * 2) < abs(temp)) temp -= PI * 2;
-  else if (abs(temp + PI * 2) < abs(temp)) temp += PI * 2;
+  temp2 = temp - PI * 2;
+  if (fabs(temp2) < fabs(temp)) temp = temp2;
+  else {
+    temp2 = temp + PI * 2;
+    if (fabs(temp2) < fabs(temp)) temp = temp2;
+  }
 
   #ifdef DEBUG
     Serial.println(F("  THETA FROM A,C"));
@@ -69,7 +70,6 @@ float IREnEmath::acTOtheta(int32_t _a, int32_t _c){
     Serial.print(_c);
     Serial.print(F(" --> "));
     Serial.println(temp, 6);
-    Serial.println(F("  COMPUTED"));
     Serial.println();
   #endif
   return temp;
@@ -77,45 +77,62 @@ float IREnEmath::acTOtheta(int32_t _a, int32_t _c){
 
 
   long IREnEmath::xyTOa(float _x, float _y){
-  float tf = _x;
-  tf /= _y;
-  tf = atan(tf);
-  tf *= A;
-  return long(tf);
+/*
+Cases:
+  -pi/2 < atan(theta) < pi/2
+    ALWAYS
+  _x is POS, _y is POS
+    0 < a < pi/2 
+  _x is NEG, _y is POS
+    -pi/2 < a < 0
+  _x is NEG, _y is NEG
+    -pi < a < -pi/2
+    SO a -= A
+  _x is POS, _y is NEG
+    pi/2 < a < pi
+    so a += A
+*/
+  if (!_y){ //Dividing by 0 impossible!
+    if (_x > 0) return PI;
+    return PI * -1;
+  }
+  float _a = _x;
+  _a /= _y;
+  _a = atan(_a);
+  _a *= A;
+  if (_x < 0 && _y < 0) _a -= (float)A * PI;
+  else if (_x > 0 && _y < 0) _a += (float)A * PI;
+  return long(_a);
   }
   
   unsigned long IREnEmath::xyTOb(float _x, float _y){
-    if (abs(_x) < 32700 && abs(_y) < 32700){
-      long t0 = _x;
-      t0 *= _x;
-      long t1 = _y;
-      t1 *= _y;
-      t0 += t1;
-      t0 = sqrt(t0);
-      //t0 *= B;
-      return t0;
-    }
-    else {
-      float t0 = _x;
-      t0 *= _x;
-      float t1 = _y;
-      t1 *= _y;
-      t0 += t1;
-      t0 = sqrt(t0);
-      //t0 *= B;
-      return t0;
-    }
+    float t0 = _x;
+    t0 *= _x;
+    float t1 = _y;
+    t1 *= _y;
+    t0 += t1;
+    t0 = sqrt(t0);
+    return t0;
   }
 
   long IREnEmath::xythetaTOc(float _x, float _y, float _theta){
-  float tf = _x;
-  tf /= _y;
-  tf = atan(tf);
-  tf = _theta - tf;
-  tf = PI + tf;
-  long _d = C;
-  _d *= tf;
-  return _d;
+    //Same considerations as xyTOa
+  float _c;
+  if (!_y){ //Dividing by 0 impossible!
+    if (_x > 0) _c = PI;
+    else _c = PI * -1;
+  }
+  else {
+    _c = _x;
+    _c /= _y;
+    _c = atan(_c);
+  }
+  _c = _theta - _c;
+  _c = PI + _c;
+  _c *= C;
+  if (_x < 0 && _y < 0) _c -= (float)C * PI;
+  else if (_x > 0 && _y < 0) _c += (float)C * PI;
+  return long(_c);
   }
 
 
@@ -175,7 +192,6 @@ void IREnEmath::abcPairIntersection(long a0, long a1, uint32_t b0, uint32_t b1, 
     Serial.print(xO);
     Serial.print(F(" yO:"));
     Serial.println(yO);
-    Serial.println(F("  POINT COMPUTED"));
     Serial.println();
   #endif
 }

@@ -35,7 +35,7 @@ public:
     //_a is the primary's steps / radian.  Take the number of steps per full revolution and divide by 2*pi.
     //_b is the extender's steps / unit.
     //_c is the secondary's steps / radian.
-  IREnEmath(uint16_t _a, uint16_t _c);
+  IREnEmath(void);
 
     //For updating the A, B, C coefficients.
   void setAC(uint16_t _a,  uint16_t _c);

@@ -13,6 +13,12 @@ boolean calcPointFromTargetLines(){//   POSITION CALCULATIONS   ################
     break;
     case 2:
       IREnE.abcPairIntersection(targets[0][0],targets[1][0],targets[0][1],targets[1][1],targets[0][2],targets[1][2]);
+      #ifdef DEBUG
+        Serial.print(F("INTERSECTION x,y "));
+        Serial.print(IREnE.objectX());
+        Serial.print(" ");
+        Serial.println(IREnE.objectY());
+      #endif
     break;
   }
   return true;
@@ -29,65 +35,74 @@ void calcCurrentxy(){
 void calcCurrDistToObject(){
   if (targetCount){
     calcCurrentxy();
-    unsigned long t0 = abs(x - IREnE.objectX());
-    unsigned long t1 = abs(y - IREnE.objectY());
-    if (t0 < 32700 && t1 < 32700){
-      t0 *= t0;
-      t1 *= t1;
-      t0 += t1;
-      t0 = sqrt(t0);
-      distO = t0;
-    }
-    else {
-      float f0 = t0;
-      f0 *= f0;
-      float f1 = t1;
-      f1 *= f1;
-      f0 += f1;
-      f0 = sqrt(f0);
-      distO = f0;
-    }
+    float f0 = x - IREnE.objectX();
+    f0 = fabs(f0);
+    f0 *= f0;
+    float f1 =y - IREnE.objectY();
+    f1 = fabs(f1);
+    f1 *= f1;
+    f0 += f1;
+    f0 = sqrt(f0);
+    distO = f0;
     #ifdef DEBUG
       Serial.println(F("  COMPUTING DIST TO OBJ"));
       Serial.print("Distance: ");
       Serial.println(distO);
     #endif
   
-    long dY = y;
+    float dY = y;
     dY -= IREnE.objectY();
-    long dX = x;
+    float dX = x;
     dX -= IREnE.objectX();
-    thetaO = dX;
-    thetaO /= dY;
+    thetaO = dX / dY;
     thetaO = atan(thetaO);
-    #ifdef DEUBG
-      Serial.print("Theta: ");
+//NEED TO ADD A WATCH HERE 0.5.4
+    //Add pi WHEN??
+    if (IREnE.objectY() < y && IREnE.objectX() > x) {
+      #ifdef DEBUG
+        Serial.print(F("Theta: "));
+        Serial.println(thetaO);
+        Serial.println(F("Added PI"));
+      #endif
+      thetaO += PI;
+    }
+    else if (IREnE.objectY() < y && IREnE.objectX() < x){
+      #ifdef DEBUG
+        Serial.print(F("Theta: "));
+        Serial.println(thetaO);
+        Serial.println(F("Subtracted PI"));
+      #endif
+      thetaO -= PI;
+      
+    }
+    #ifdef DEBUG
+      Serial.print(F("Theta: "));
       Serial.println(thetaO);
+      Serial.print(F("x, y, oX, oY:"));
+      Serial.print(x);
+      Serial.print(" ");
+      Serial.print(y);
+      Serial.print(" ");
+      Serial.print(IREnE.objectX());
+      Serial.print(" ");
+      Serial.println(IREnE.objectY());
     #endif
   
-    float ft0 = IREnE.objectX();
-    ft0 *= IREnE.objectX();
-    float ft1 = IREnE.objectY();
-    ft1 *= IREnE.objectY();
-    ft0 += ft1;
-    distOMax = sqrt(ft0);
+    f0 = IREnE.objectX();
+    f0 *= IREnE.objectX();
+    f1 = IREnE.objectY();
+    f1 *= IREnE.objectY();
+    f0 += f1;
+    distOMax = sqrt(f0);
     distOMax -= bMin * B;
   }
-  else {
-    distO = 0;
-  }
-  #ifdef DEBUG
-    Serial.print("Max Distance: ");
-    Serial.println(distOMax);
-    Serial.println(F("  DIST COMPUTED"));
-  #endif
-  
+  else distO = 0;
 }
 
 void moveToxytheta(){
   a.moveTo(IREnE.xyTOa(xT, yT));
-  b.moveTo(min(bMax, IREnE.xyTOb(xT, yT)));
-  cRotate(IREnE.xythetaTOc(xT, yT, thetaT));
+  bMove(IREnE.xyTOb(xT, yT));
+  c.moveTo(cRot(IREnE.xythetaTOc(xT, yT, thetaT)));
 
   #ifdef DEBUG
     Serial.println(F("  COMPUTING AB FROM xT,yT, thetaT"));
@@ -103,7 +118,6 @@ void moveToxytheta(){
     Serial.print(b.targetPosition());
     Serial.print(F(" c: "));
     Serial.println(c.targetPosition());
-    Serial.println(F("  COMPUTED"));
     Serial.println();
   #endif
 }
@@ -114,21 +128,18 @@ void moveToObjThetaDist(){
   
   #ifdef DEBUG
     Serial.println(F("   moveToObjThetaDist"));
-    Serial.print(F("IREnE.objectX():"));
+    Serial.print(F("oX, oY: "));
     Serial.print(IREnE.objectX());
-    Serial.print(F("IREnE.objectY():"));
-    Serial.print(IREnE.objectY());
-    Serial.print(F("distT:"));
+    Serial.print(F(", "));
+    Serial.println(IREnE.objectY());
+    Serial.print(F("distT: "));
     Serial.print(distT);
-    Serial.print(F("thetaT:"));
+    Serial.print(F(" thetaT: "));
     Serial.println(thetaT);
-    Serial.print(F("xT: "));
+    Serial.print(F("xT, yT: "));
     Serial.print(xT);
-    Serial.print(F(" yT: "));
+    Serial.print(F(", "));
     Serial.println(yT);
-    Serial.println(F("   COMPUTED"));
     Serial.println();
   #endif
-  
-  moveToxytheta();
 }

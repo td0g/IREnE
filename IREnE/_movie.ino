@@ -1,0 +1,86 @@
+void movie(float _x, float _y, float objThetaD){
+  byte _calcNextPoint;
+  float nextSpeed = 0;
+  unsigned long _lastTime = millis() - (movieAccelTime * MOVIE_JERK * 1000);//Start at 5% max speed
+  float _accelRate = 0;
+  movieNextPos[0] = a.currentPosition();
+  movieNextPos[1] = b.currentPosition();
+  movieNextPos[2] = c.currentPosition();
+  while (buttonPressed || _accelRate > MOVIE_JERK){
+    _calcNextPoint = 1;
+    while (m.runBresenhamSpeed() || _calcNextPoint) {
+      m.runBresenhamSpeed();
+      analogReadAll();
+
+      if (_calcNextPoint){         //Let's compute the next target ahead of time
+        _calcNextPoint = 0;
+        m.runBresenhamSpeed();
+          if (!buttonPressed) _accelRate = _accelRate - (millis() - _lastTime) / (1000 * movieAccelTime);
+          else {
+            _accelRate = _accelRate + (millis() - _lastTime) / (1000 * movieAccelTime);
+            _accelRate = min(_accelRate, 1);
+          }
+          _lastTime = millis();
+          m.runBresenhamSpeed();
+ //Now we have _accelRate.
+ 
+        if (objThetaD){ //IR
+          thetaT = thetaT + (objThetaD *  _accelRate);
+          m.runBresenhamSpeed();
+          moveToObjThetaDist();
+        }
+        else {
+          xT += _x * _accelRate;
+          yT += _y * _accelRate;
+        }
+        m.runBresenhamSpeed();
+  //Now we have a target physical position
+      
+        long _a = movieNextPos[0];
+        long _b = movieNextPos[1];
+        movieNextPos[0] = IREnE.xyTOa(xT, yT);  //About 224 micros
+        m.runBresenhamSpeed();
+        movieNextPos[1] = min(bMax, IREnE.xyTOb(xT, yT));  //About 76 micros
+        m.runBresenhamSpeed();
+        movieNextPos[2] = IREnE.xythetaTOc(xT, yT, thetaT);   //About 260 micros
+        m.runBresenhamSpeed();
+  //Now we have motor target positions
+        if (movieSpeed){
+          _a -= movieNextPos[0];
+          _b -= movieNextPos[1];
+          _a = abs(_a);
+          _b = abs(_b);
+          if (_a > _b) nextSpeed = _a;
+          else nextSpeed = _b * -1;
+          nextSpeed *= movieSpeed;
+          m.runBresenhamSpeed();
+        }
+      }
+    }
+    movieNextPos[2] = cRot(movieNextPos[2]);
+    if (!movieSpeed) setMotorSpeed(_accelRate);
+    else{
+      if (nextSpeed > 0) {
+        nextSpeed = min(nextSpeed, motorMaxSpeed[0]);
+        a.setMaxSpeed(nextSpeed);
+        b.setMaxSpeed(motorMaxSpeed[1]);
+      }
+      else {
+        nextSpeed *= -1;
+        nextSpeed = min(nextSpeed, motorMaxSpeed[1]);
+        a.setMaxSpeed(motorMaxSpeed[0]);
+        b.setMaxSpeed(nextSpeed); //Cause setMaxSpeed alread checks for negative values
+      }
+    }
+    m.setupBresenham(movieNextPos);
+    nextSpeed = 0;
+  }
+  //Cleanup on exit
+  setMotorSpeed(1);
+  motorStop();
+  calcCurrentxy();
+  xT = x;
+  yT = y;
+  thetaT = theta;
+}
+

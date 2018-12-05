@@ -1,34 +1,28 @@
-void setMotorSpeed(byte _s){//   MOTOR CONTROLS   ############################################################################################################################################################
-  if (_s){
-  a.setMaxSpeed(motorTravelSpeed);
-  b.setMaxSpeed(motorTravelSpeed);
-  c.setMaxSpeed(motorTravelSpeed / 2);
-  a.setAcceleration(motorTravelAcc);
-  b.setAcceleration(motorTravelAcc * 4);
-  c.setAcceleration(motorTravelAcc / 2);
+void setMotorSpeed(float _s){//   MOTOR CONTROLS   ############################################################################################################################################################
+  if (_s > 0){
+    a.setMaxSpeed(motorMaxSpeed[0] * _s);
+    b.setMaxSpeed(motorMaxSpeed[1] * _s);
+    c.setMaxSpeed(motorMaxSpeed[2] * _s);  //could be 3200
+    a.setAcceleration(motorTravelAcc);
+    b.setAcceleration(motorTravelAcc * 4);
+    c.setAcceleration(8000);
   }
   else {
-  a.setMaxSpeed(motorTravelSpeed / 8);
-  b.setMaxSpeed(motorTravelSpeed / 4);
-  c.setMaxSpeed(motorTravelSpeed / 16);
-  a.setAcceleration(motorTravelAcc / 8);
-  b.setAcceleration(motorTravelAcc / 4);
-  c.setAcceleration(motorTravelAcc / 8);
+    a.setMaxSpeed(motorTravelSpeed / 8);
+    b.setMaxSpeed(motorTravelSpeed / 4);
+    c.setMaxSpeed(motorTravelSpeed / 8);
+    a.setAcceleration(motorTravelAcc / 8);
+    b.setAcceleration(motorTravelAcc / 4);
+    c.setAcceleration(motorTravelAcc / 2);
   }
 }
 
-
 boolean runMotor(){
-  if (b.isRunning()) bEnable;
-  else {
-    if (b.currentPosition() < bMin) {
-      b.setCurrentPosition(bMin);
-      for (byte i = 0; i < MAX_TARGETS; i++){
-        if (targets[i][1]) targets[i][1] -= (bMin - b.currentPosition());
-      }
-    }
-    bDisable;
+  if (!b.isRunning() && b.currentPosition() < bMin) {
+    b.setCurrentPosition(bMin);
+    for (byte i = 0; i < targetCount; i++)targets[i][1] += (bMin - b.currentPosition());
   }
+  
   if (b.run()){
    a.run();
    c.run();
@@ -51,18 +45,24 @@ void motorStop(){
 }
 
 
-void cRotate(long _c){
+void bMove(long _b){
+  b.moveTo(min(_b, bMax));
+}
+
+
+long cRot(long _c){
   long _a;
   long _b;
-  int _C = C * 2;
+  long _C = C;
+  _C *= 2;
   _C *= PI;
   if (_c < c.currentPosition()) _C *= -1;
   _a = _c - c.currentPosition();  //7700
   _b = _a - _C;
   while (abs(_b) < abs(_a)) {
-    c.setCurrentPosition(c.currentPosition() + _C);
+    _c -= _C; //c.setCurrentPosition(c.currentPosition() + _C);
     _a = _c - c.currentPosition();
     _b = _a - _C;
   }
-  c.moveTo(_c);
+  return _c;
 }

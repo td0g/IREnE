@@ -2,8 +2,8 @@ void saveEEPROM(){
   EEPROMWriteint(0, A);
   EEPROMWriteint(2, B);
   EEPROMWriteint(4, C);
-  EEPROMWriteint(6, bMin / B);
-  EEPROMWriteint(8, bMax / B / 10);
+  EEPROMWriteint(6, bMinMM);
+  EEPROMWriteint(8, bMaxMM);
   EEPROMWriteint(11, stabTimeMin);
   EEPROMWriteint(13, stabTimeMax);
   EEPROM.update(10, cFlip);
@@ -25,36 +25,21 @@ void EEPROMWriteint(unsigned int _i, unsigned int _d){
   EEPROM.write(_i, t);
 }
 
-
-
-void printSpace(){
-  Serial.print(F(" "));
+void EEPROMWritelong(unsigned int address, long value) {
+  for (byte i = 0; i < 4; i++){
+    byte _b = ((value >> (8 * i)) & 0xFF);
+    EEPROM.write(address + i, _b);
+  }
 }
-void EEPROMWritelong(unsigned int address, long value)
-      {
-      //Decomposition from a long to 4 bytes by using bitshift.
-      //One = Most significant -> Four = Least significant byte
-      byte four = (value & 0xFF);
-      byte three = ((value >> 8) & 0xFF);
-      byte two = ((value >> 16) & 0xFF);
-      byte one = ((value >> 24) & 0xFF);
-
-      //Write the 4 bytes into the eeprom memory.
-      EEPROM.write(address, four);
-      EEPROM.write(address + 1, three);
-      EEPROM.write(address + 2, two);
-      EEPROM.write(address + 3, one);
-      }
 
 long EEPROMReadlong(int address){
-      //Read the 4 bytes from the eeprom memory.
-      long four = EEPROM.read(address);
-      long three = EEPROM.read(address + 1);
-      long two = EEPROM.read(address + 2);
-      long one = EEPROM.read(address + 3);
-
-      //Return the recomposed long by using bitshift.
-      return ((four << 0) & 0xFF) + ((three << 8) & 0xFFFF) + ((two << 16) & 0xFFFFFF) + ((one << 24) & 0xFFFFFFFF);
+  unsigned long _d;
+  address += 3;
+  for (byte i = 0; i < 4; i++){
+    _d = _d << 8;
+    _d += EEPROM.read(address - i);
+  }
+return _d;
 }
 
 
@@ -98,13 +83,13 @@ void printEEPROMlocation(unsigned int i){
       Serial.print(F("#,"));
     }
     Serial.println();
-    Serial.print(F("Index,"));
-    Serial.println(EEPROM.read(j));
-    Serial.print(F("Type,"));
-    Serial.println(EEPROM.read(j + EEPROM_TYPE));
-    Serial.print(F("Shots,"));
+    Serial.println(F("Index, Type, Shots"));
+    Serial.print(EEPROM.read(j));
+    Serial.print(F(","));
+    Serial.print(EEPROM.read(j + EEPROM_TYPE));
+    Serial.print(F(","));
     Serial.println(EEPROMReadint(i + EEPROM_COUNT));
-    Serial.print(F("A,B,C: "));
+    Serial.println(F("A,B,C"));
     Serial.print(EEPROMReadint(i + EEPROM_ABC));
     Serial.print(F(", "));
     Serial.print(EEPROMReadint(i + EEPROM_ABC + 2));
@@ -114,7 +99,7 @@ void printEEPROMlocation(unsigned int i){
     j += EEPROM_TARGETS;
     
     float _t;
-    for (byte k = 0; k < MAX_TARGETS; k++){
+    for (byte k = 0; k < 2; k++){
       Serial.print(F("Target "));
       Serial.print(k);
       Serial.print(F(","));

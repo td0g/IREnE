@@ -33,31 +33,97 @@
     Setting bMin position can be done after targets set - their positions are updated
     TR button on Main Menu over Move will rotate camera to last target's theta
       (useful for forcing linear movement with no rotation)
+
+  0.5
+    2018-09-25
+    Fixed bug where A & C would not stop moving in Move menu
+    Fixed intervalometer timer
+    Added countdown to next photo
+    Fixed IREnE Library bug (atan domains)
+
+  0.5.1
+    2018-10-11
+    Memory-saving changes
+    Controller Reading Algorithm Improvements
+
+  0.5.2
+    2018-10-21
+    Bug Fixes
+
+  0.5.3
+    2018-11-07
+    Bug Fixes
+
+  0.6
+    2018-11-19
+    Modifications to AccelStepper and MultiStepper libraries
+    Now implement a bresenham algorithm to allow continuous, coordinated movement
+    Video can be taken while in IR setup menu, as motion is continuous
+
+  0.6.1
+    2018-11-21
+    IR Movie Speed user-selectable
+    IR Speeds 0 - 5, where 0 is slowest and 4 is fastest constant speed, while 5 is max speed (not constant during rotation)
+    XY Movie
+
+  0.6.2
+    2018-11-22
+    IR Speed now in terms of seconds per revolution
+    IR Acceleration in terms of time to max speed
+
+  0.6.3
+    2018-11-26
+    Bug Fixes
+
+  0.6.4
+    2018-11-28
+    Edits to AccelStepper
+    (Multi-Stepping, reducing run() overhead)
+    Migrating linear movement to movie() function
+    Optimizing analogReadAll()
+
+  0.6.5
+    2018-11-30
+    Bug Fixes
+
+  0.6.6
+    2018-12-01
+    Changing IR Movie speed from sec/rev to mm/s
+    Implement IR acceleration at max speed
  */
  
 
 
 //Definitions
 
-  #define FIRMWARE_VERSION "0.4"
+  #define FIRMWARE_VERSION "0.6.6"
 
   //#define DEBUG
+  //#define DEBUG_ADC
   
-  #define MAX_TARGETS 2
   #define BAUD 119200
   #define A_DEFAULT 15384   //step / rad //1/8stepping
-  #define B_DEFAULT 54     //step / mm    //Change to 4 for 2Metres!!! //1/2 stepping
-  #define C_DEFAULT 1194    //step / rad: (400step * 4) * (75/16) 1/4 stepping
+  #define B_DEFAULT 54     //step / mm
+  #define C_DEFAULT 5371    //step / rad: (400step * 4) * (75/16) 1/4 stepping
   #define B_MIN_DEFAULT 250
   #define B_MAX_DEFAULT 1500
-  #define ADC_HISTORY_LENGTH 25
-  #define ADC_HISTORY_TOLERANCE 20
+  #define MOTOR_STEP_SPEED_MAX 3000
+  
+  #define ADC_HISTORY_LENGTH 3
+  #define ADC_HISTORY_TOLERANCE 10
+  #define ADC_TIMER_INTERVAL 2
+  
   #define MINIMUM_STABILIZE_TIME_DEFAULT 1500
   #define MAXIMUM_STABILIZE_TIME_DEFAULT 4000
+  
   #define PROGRAM_HISTORY_EEPROM_START 128
   #define PROGRAM_HISTORY_EEPROM_SIZE 128
+  
   #define INTERVALOMETER_MOVE_TIME 2  //seconds
-  #define INVERTED_RADIAL_SETUP_MOVE_RADS 0.05
+  #define INTERVALOMETER_POST_PHOTO_DELAY 500
+
+  #define IR_MIN_OBJ_DIST 1000                //B Units
+  #define MOVIE_JERK 0.05
 
 //Pins
   #define aStepPin 3
@@ -120,12 +186,14 @@
   #define LCD_CLEAR_LINE lcd.print("        ");
 
 //Motor
-  #include <AccelStepper.h>
+  #include "AccelStepper.h"
+  #include "MultiStepper.h"
   AccelStepper a(1, aStepPin, aDirPin);
   AccelStepper b(1, bStepPin, bDirPin);
   AccelStepper c(1, cStepPin, cDirPin);
+  MultiStepper m;
   byte cFlip;
-  unsigned int motorTravelSpeed = 2000;
+  unsigned int motorTravelSpeed = MOTOR_STEP_SPEED_MAX;
   unsigned int motorTravelAcc = 2000;
 
 //Positioning Coefficients
@@ -133,42 +201,45 @@
   unsigned int B;   //Step / mm
   unsigned int C;   //Step / rad
   unsigned int bMin;
+  unsigned int bMinMM;
   unsigned long bMax;
+  unsigned int bMaxMM;
 
 //Math Library
   #include "IREnEmath.h"
-  IREnEmath IREnE(A,C);
+  IREnEmath IREnE;
 
 //Current head position
-  float x;
-  float y;
-  float theta;
+  float x;            //extensionUnits
+  float y;            //extensionUnits
+  float theta;        //Rads
   
 //Target head position
-  float xT = x;
-  float yT = y;
-  float thetaT = 0;  //0.01 deg
-  long distT;
+  float xT = x;       //extensionUnits
+  float yT = y;       //extensionUnits
+  float thetaT = 0;   //Rads
+  long distT;         //extensionUnits
   
 //Current object position
-  float thetaO;
-  float thetaSTART;
-  float thetaEND;
-  unsigned long distO;
-  unsigned long distOMax;
+  float thetaO;           //Rads
+  float thetaSTART;       //Rads
+  float thetaEND;         //Rads
+  unsigned long distO;    //Rads
+  unsigned long distOMax; //Rads
   
 //Target Setup
   byte targetCount;
-  long targets[MAX_TARGETS][3];
-
-//Serial
-  String COMstring;
-  long COMvalue;
-  const char terminator = '/';
+  long targets[2][3];
 
 //Menu Structure
   byte menuPosition;
 
+//Movie Speed
+  byte movieSpeed = 1;
+  float movieAccelTime;
+  long movieNextPos[3] = {0, 0, 0};
+  unsigned int motorMaxSpeed[3] = {1500, 2200, 2000};
+  
 //Intervalometer
   unsigned int totalTime;
   unsigned int shutterTime = 1;
@@ -190,11 +261,12 @@ void setup() {
   cDisable;
   
   Serial.begin(BAUD);
-  Serial.println(F("IREnE Ready"));
-
   lcd.begin(16, 2);
+  lcd.clear();
+  delay(100);
+
   lcd.setCursor(0,0);
-  lcd.print(F("IREnE Ready"));
+  lcd.print(F("- IREnE Ready -"));
   lcd.setCursor(0,1);
   lcd.print(F("FW "));
   lcd.print(FIRMWARE_VERSION);
@@ -203,17 +275,22 @@ void setup() {
   a.setPinsInverted(true, false, true);
   b.setPinsInverted(true, false, true);
   c.setPinsInverted(false, false, true); //first is dir
+  m.addStepper(a);
+  m.addStepper(b);
+  m.addStepper(c);
   setMotorSpeed(1);
+  a.setMaxFrequency(900);
+  b.setMaxFrequency(1500);
+  c.setMaxFrequency(800);
 
 //Retrieve settings from EEPROM
   A = EEPROMReadint(0);
   B = EEPROMReadint(2);
   C = EEPROMReadint(4);
-  bMin = EEPROMReadint(6);
-  bMax = EEPROMReadint(8);
-  bMin *= B;
-  bMax *= B;
-  bMax *= 10;
+  bMinMM = EEPROMReadint(6);
+  bMaxMM = EEPROMReadint(8);
+  bMin = bMinMM * B;
+  bMax = (long)bMaxMM * B;
   stabTimeMin = EEPROMReadint(11);
   stabTimeMax = EEPROMReadint(13);
   cFlip = EEPROM.read(10);
@@ -229,8 +306,8 @@ void setup() {
 
 
 
-void loop() {
-  if (getCommand()) parseCommand(); 
+void loop() { //########################################################################################################################
+  getCommand(); 
   runMotor();
   analogReadAll();
   doButton();
