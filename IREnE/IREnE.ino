@@ -90,18 +90,27 @@
     2018-12-01
     Changing IR Movie speed from sec/rev to mm/s
     Implement IR acceleration at max speed
+
+  1.0
+    2018-12-04
+    Added gcode parser for CNC Pancake Printing!
  */
  
 
 
 //Definitions
 
-  #define FIRMWARE_VERSION "0.6.6"
+  #define FIRMWARE_VERSION "1.0"
 
   //#define DEBUG
   //#define DEBUG_ADC
+
+  #define CNC_PANCAKE
+
+  #define COORDINATED_MOVE m.runBresenhamSpeed()
+  #define COORDINATED_MOVE_SETUP m.setupBresenham
   
-  #define BAUD 119200
+  #define BAUD 115200
   #define A_DEFAULT 15384   //step / rad //1/8stepping
   #define B_DEFAULT 54     //step / mm
   #define C_DEFAULT 5371    //step / rad: (400step * 4) * (75/16) 1/4 stepping
@@ -128,23 +137,20 @@
 //Pins
   #define aStepPin 3
   #define aDirPin 4
-  #define aEnPin 2
   #define bStepPin 6
   #define bDirPin 7
-  #define bEnPin 5
+  #define motorEnPin 5
   #define cStepPin 8
   #define cDirPin 9
   #define cEnPin 10
   #define shutterPin 15
-  #define aDisable PORTD |= 0b00000100
-  #define aEnable PORTD &= 0b11111011
-  #define bDisable PORTD |= 0b00100000
-  #define bEnable PORTD &= 0b11011111
-  #define cDisable PORTB |= 0b00000100
-  #define cEnable PORTB &= 0b11111011
+  #define motorDisable PORTD |= 0b00100000
+  #define motorEnable PORTD &= 0b11011111
+
+  #define voltageInPin 18
   
   #define LCD_RS 19
-  #define LCD_EN 18
+  #define LCD_EN 2
   #define LCD_D4 14
   #define LCD_D5 13
   #define LCD_D6 12
@@ -239,6 +245,7 @@
   float movieAccelTime;
   long movieNextPos[3] = {0, 0, 0};
   unsigned int motorMaxSpeed[3] = {1500, 2200, 2000};
+  byte pancakePrinting = 0;
   
 //Intervalometer
   unsigned int totalTime;
@@ -247,18 +254,15 @@
   unsigned int stabTimeMax;
   unsigned int stabTimeMin;
 
+
 void setup() {
   digitalWrite(shutterPin, 0);
   SHUTTER_CLOSE;
   pinMode(c0Pin, INPUT);    //470 nF cap to gnd
   pinMode(c1Pin, INPUT);    //470 nF cap to gnd
 
-  pinMode(aEnPin, OUTPUT);
-  pinMode(bEnPin, OUTPUT);
-  pinMode(cEnPin, OUTPUT);
-  aDisable;
-  bDisable;
-  cDisable;
+  pinMode(motorEnPin, OUTPUT);
+  motorDisable;
   
   Serial.begin(BAUD);
   lcd.begin(16, 2);

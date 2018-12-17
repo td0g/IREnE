@@ -210,13 +210,13 @@ void doButton(){  //############################################################
 //Other Stuff
       switch (menuPosition & 0b01111111){
       case MENU_MOVE:
-        if (BUTTON_R) {menuPosition = MENU_MOVEAB; aEnable; bEnable; cEnable;}
+        if (BUTTON_R) {menuPosition = MENU_MOVEAB; motorEnable;}
         else if (BUTTON_TR && targetCount) c.moveTo(cRot(IREnE.xythetaTOc(IREnE.abTOx(a.currentPosition(), b.currentPosition()), IREnE.abTOy(a.currentPosition(), b.currentPosition()), IREnE.acTOtheta(targets[targetCount-1][0],targets[targetCount-1][2]))));
         else if (BUTTON_L) {
           menuPosition = MENU_MOVEXY_SPEED;
           movieAccelTime = 0.25;
           movieSpeed = max(movieSpeed, 1);
-          aEnable; bEnable; cEnable;
+          motorEnable;
         }
       break;
       case MENU_SET_TARGET:
@@ -389,8 +389,8 @@ void doButton(){  //############################################################
             xInc *= -1;
             yInc *= -1;
           }
-          if ((BUTTON_L) || (BUTTON_R)) movie(xInc, yInc, 0);
-          else if ((BUTTON_U) || (BUTTON_D)) movie(yInc, xInc, 0);
+          if ((BUTTON_L) || (BUTTON_R)) movie(xInc, yInc, 0, 0);
+          else if ((BUTTON_U) || (BUTTON_D)) movie(yInc, xInc, 0, 0);
         }
 
       break;
@@ -402,7 +402,7 @@ void doButton(){  //############################################################
           float thetaD = B;   //1 mm
           thetaD /= distO;     //theta = 1mm / distO
           if (BUTTON_R) thetaD *= -1;
-          movie(0, 0, thetaD);
+          movie(0, 0, thetaD, 0);
         }
         else if (BUTTON_TR) {
           lcd.clear();
