@@ -52,6 +52,9 @@ public:
     //Given x and y, return a
   long xyTOa(float _x, float _y);
 
+    //Given Cartesian Coordinates, return polar direction
+  float xyTOdir(float _x, float _y);
+
     //Given x and y, return b
   unsigned long xyTOb(float _x, float _y);
 

@@ -74,6 +74,10 @@ void runUI(){ //################################################################
         break;
         case MENU_SETTINGS:
         lcd.print(F("Settings"));
+        lcd.setCursor(4, 1);
+        lcd.print(F("Input "));
+        lcd.print(inputVoltage());
+        lcd.print(F(" V "));
         break;
         case MENU_SETTINGS_ACAL: case MENU_SETTINGS_BCAL:
         lcd.print(F("A Cal "));
@@ -290,7 +294,7 @@ void doButton(){  //############################################################
           }
         }
       break;
-      case MENU_SETTINGS: if (BUTTON_R) menuPosition = 16;  break;
+      case MENU_SETTINGS: if (BUTTON_R) menuPosition = MENU_SETTINGS_ACAL;  break;
       case MENU_SETTINGS_ACAL: 
         if (alterValue(&A, 25)) {
           A = max(A, 1); 
@@ -501,4 +505,3 @@ float minRotateTime(){
   _m1 = 1 / _m1; //s / rot
   return _m1;
 }
-

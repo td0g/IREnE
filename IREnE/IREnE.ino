@@ -94,22 +94,30 @@
   1.0
     2018-12-04
     Added gcode parser for CNC Pancake Printing!
+	
+  1.0.1
+    2019-02-04
+	Modifications to IREnE library - Now much faster to call xyTOa, xythetaTOc & smaller code
+	Fixed some bugs in IREnE library
+  Fixed IR timelapse bug
+  Introduced input voltage monitoring
  */
  
 
-
-//Definitions
-
-  #define FIRMWARE_VERSION "1.0"
+//Modes (uncomment to activate)
 
   //#define DEBUG
   //#define DEBUG_ADC
+  //#define CNC_PANCAKE
+  
+//Definitions
 
-  #define CNC_PANCAKE
+  #define FIRMWARE_VERSION "1.0.1"
 
   #define COORDINATED_MOVE m.runBresenhamSpeed()
   #define COORDINATED_MOVE_SETUP m.setupBresenham
-  
+
+  #define VOLTAGE_DIVISOR 18
   #define BAUD 115200
   #define A_DEFAULT 15384   //step / rad //1/8stepping
   #define B_DEFAULT 54     //step / mm
@@ -119,7 +127,7 @@
   #define MOTOR_STEP_SPEED_MAX 3000
   
   #define ADC_HISTORY_LENGTH 3
-  #define ADC_HISTORY_TOLERANCE 10
+  #define ADC_HISTORY_TOLERANCE 8 //Decrease to improve precision
   #define ADC_TIMER_INTERVAL 2
   
   #define MINIMUM_STABILIZE_TIME_DEFAULT 1500
@@ -254,6 +262,8 @@
   unsigned int stabTimeMax;
   unsigned int stabTimeMin;
 
+//Voltage Input
+  unsigned int voltIn;
 
 void setup() {
   digitalWrite(shutterPin, 0);
@@ -263,6 +273,8 @@ void setup() {
 
   pinMode(motorEnPin, OUTPUT);
   motorDisable;
+
+  pinMode(voltageInPin, INPUT);
   
   Serial.begin(BAUD);
   lcd.begin(16, 2);
@@ -311,7 +323,9 @@ void setup() {
 
 
 void loop() { //########################################################################################################################
-  getCommand(); 
+  #ifdef CNC_PANCAKE
+    getCommand(); 
+  #endif
   runMotor();
   analogReadAll();
   doButton();

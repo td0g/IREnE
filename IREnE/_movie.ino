@@ -13,12 +13,11 @@ void movie(float _x, float _y, float objThetaD, unsigned int _sections){
   }
   _sections++;
   while (buttonPressed || _accelRate > MOVIE_JERK || _sections){
-    _sections--;
+    if (_sections > 0) _sections--;
     _calcNextPoint = 1;
     while (COORDINATED_MOVE || _calcNextPoint) {
       COORDINATED_MOVE;
       analogReadAll();
-
       if (_calcNextPoint){         //Let's compute the next target ahead of time
         _calcNextPoint = 0;
         COORDINATED_MOVE;
@@ -99,4 +98,3 @@ void movie(float _x, float _y, float objThetaD, unsigned int _sections){
   yT = y;
   thetaT = theta;
 }
-

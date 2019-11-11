@@ -77,6 +77,18 @@ float IREnEmath::acTOtheta(int32_t _a, int32_t _c){
 
 
   long IREnEmath::xyTOa(float _x, float _y){
+    float _a;
+    _a = xyTOdir(_x, _y);
+    _a *= A;
+    return long(_a);
+  }
+
+  
+  
+float IREnEmath::xyTOdir(float _x, float _y){
+  static float x;
+  static float y;
+  static float _a;
 /*
 Cases:
   -pi/2 < atan(theta) < pi/2
@@ -92,48 +104,43 @@ Cases:
     pi/2 < a < pi
     so a += A
 */
-  if (!_y){ //Dividing by 0 impossible!
-    if (_x > 0) return PI;
-    return PI * -1;
+  if (_y < 0.00001 && _y > -0.00001){ //Dividing by 0 impossible!
+    if (_x > 0) return PI * 0.5;
+    return PI * -0.5;
   }
-  float _a = _x;
+  else if (_x < 0.00001 && _x > -0.00001){
+    if (_y > 0) return 0;
+    return PI;
+  }
+  if (_x == x && _y == y) return _a;    //We already calculated this one, why not give the same answer?  Useful for consecutive xyTOa,xythetaTOc calls
+
+  x = _x;  //Brand new values
+  y = _y;
+  _a = _x;  //The actual trigonometry starts here
   _a /= _y;
   _a = atan(_a);
-  _a *= A;
-  if (_x < 0 && _y < 0) _a -= (float)A * PI;
-  else if (_x > 0 && _y < 0) _a += (float)A * PI;
-  return long(_a);
-  }
+  if (_x < 0 && _y < 0) _a -= PI;
+  else if (_x > 0 && _y < 0) _a += PI;
+  return _a;
+}
   
-  unsigned long IREnEmath::xyTOb(float _x, float _y){
-    float t0 = _x;
-    t0 *= _x;
-    float t1 = _y;
-    t1 *= _y;
-    t0 += t1;
-    t0 = sqrt(t0);
-    return t0;
-  }
+ 
 
   long IREnEmath::xythetaTOc(float _x, float _y, float _theta){
     //Same considerations as xyTOa
-  float _c;
-  if (!_y){ //Dividing by 0 impossible!
-    if (_x > 0) _c = PI;
-    else _c = PI * -1;
+  _theta = PI + _theta - xyTOdir(_x, _y);
+  _theta *= C;
+  return long(_theta);
+}
+  
+  unsigned long IREnEmath::xyTOb(float _x, float _y){
+    _x *= _x;
+    _y *= _y;
+    _x += _y;
+    _y = sqrt(_x);
+    return _y;
   }
-  else {
-    _c = _x;
-    _c /= _y;
-    _c = atan(_c);
-  }
-  _c = _theta - _c;
-  _c = PI + _c;
-  _c *= C;
-  if (_x < 0 && _y < 0) _c -= (float)C * PI;
-  else if (_x > 0 && _y < 0) _c += (float)C * PI;
-  return long(_c);
-  }
+
 
 
 void IREnEmath::abcPairIntersection(long a0, long a1, uint32_t b0, uint32_t b1, long c0, long c1){

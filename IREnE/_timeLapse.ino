@@ -128,14 +128,12 @@ void runProgram(byte _type){//   THE INTERVALOMETER PROGRAM   ##################
     yT = y;
     thetaT = theta; 
   } 
-
 //Start the cycle - MOVE, STABILIZE/DWELL, SHOOT
   while (_numberShots){
     _numberShots--;
     thetaT += thetaDelta;
     xT += xDelta;
     yT += yDelta;
-    
     lcd.setCursor(0,1);
     lcd.print(numberShots - _numberShots);
     lcd.setCursor(0,0);
@@ -144,8 +142,11 @@ void runProgram(byte _type){//   THE INTERVALOMETER PROGRAM   ##################
       moveToObjThetaDist();
       moveToxytheta();
     }
-    else moveToxytheta();
-    while (m.runBresenham()){
+    else {
+      moveToxytheta();
+    }
+    //while (m.runBresenham()){
+    while (runMotor()){
       analogReadAll();
       if (BUTTON_TL) motorStop();
     }
@@ -164,14 +165,23 @@ void runProgram(byte _type){//   THE INTERVALOMETER PROGRAM   ##################
       unsigned long _countDownNow = _totalTime / 1000 - (millis() - _startTime) / 1000;
       if (_countDownNow != _countDown){
         _countDown = _countDownNow;
-        if (totalTime) {
           lcd.setCursor(8, 0);
-          lcd.print(_countDown);
-          lcd.print(F(" "));
+        if (millis() % 8100 < 4000){
+          if (totalTime) {
+            lcd.print(_countDown);
+            lcd.print(F(" "));
+          }
+          else {
+            lcd.print(F("RAPID"));
+          }
+        }
+        else {
+          lcd.print(inputVoltage());
+          lcd.print(F("V "));
         }
         lcd.setCursor(11,1);
         lcd.print((_timer - millis()) / 1000);
-        lcd.print(F(" "));
+        lcd.print(F("   "));
       }
       analogReadAll();
       if (BUTTON_TL) {_timer = millis() - _shutterTime; _numberShots = 0;}
@@ -187,14 +197,23 @@ void runProgram(byte _type){//   THE INTERVALOMETER PROGRAM   ##################
       unsigned long _countDownNow = _totalTime / 1000 - (millis() - _startTime) / 1000;
       if (_countDownNow != _countDown){
         _countDown = _countDownNow;
-        if (totalTime) {
-          lcd.setCursor(8, 0);
-          lcd.print(_countDown);
-          lcd.print(F(" "));
+        lcd.setCursor(8, 0);
+        if (millis() % 8100 < 4000){
+          if (totalTime) {
+            lcd.print(_countDown);
+            lcd.print(F("    "));
+          }
+          else {
+            lcd.print(F("RAPID"));
+          }
+        }
+        else {
+          lcd.print(inputVoltage());
+          lcd.print("V ");
         }
         lcd.setCursor(11,1);
         lcd.print((_timer + _shutterTime - millis()) / 1000);
-        lcd.print(F(" "));
+        lcd.print(F("   "));
       }
       analogReadAll();
       if (BUTTON_TL) {_timer = millis() - _shutterTime; numberShots = 0;}
