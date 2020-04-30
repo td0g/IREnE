@@ -84,3 +84,9 @@ Menu can be navigated using UP / DOWN buttons
   
   The A, B, and C coefficients can be set by the 'aXXX/', 'bXXX/', and 'cXXX/' commands.
   
+  
+## License
+
+Documentation is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/)
+
+Software is licensed under a [GNU GPL v3 License](https://www.gnu.org/licenses/gpl-3.0.txt)
