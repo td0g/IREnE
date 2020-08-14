@@ -2,9 +2,9 @@
 Advanced camera timelapse slider
 
 By Tyler Gerritsen
-vtgerritsen@gmail.com
+tyler@td0g.ca
 
-For description see https://gerritsendesign.wordpress.com/2018/09/23/camera-slider-2-0-irene-diy/
+For description see http://td0g.ca/2018/09/23/camera-slider-2-0-irene-diy/
 
 ## UI Manual:
 
